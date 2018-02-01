@@ -41,6 +41,8 @@ If you store the analyzer settings in a separate file, you can specify it in thi
 
 The analyzer integration with our module is convenient if you want to use incremental analysis in the IDE (CLion/QtCreator). For a quick check of a project or the server analysis automatization you can use another method. 
 
+### Analysis without integration
+
 To check a CMake project, you can use the JSON Compilation Database. To obtain the *compile_commands.json* file required by the analyzer, add a flag to the Cmake call:
 
 ```
