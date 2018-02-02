@@ -24,7 +24,7 @@ The ```OUTPUT``` parameter is optional. If you work in CLion or QtCreator, then 
 PREPROCESSOR gcc
 ```
 
-You can tell the analyzer to use a particular preprocessor. Possible values are: ```gcc```, ```clang```, ```keil```.
+You can tell the analyzer to use a particular preprocessor. Possible values are: ```gcc```, ```clang```.
 
 ```
 CXX_FLAGS ${PREPROCESSOR_ADDITIONAL_FLAGS}
