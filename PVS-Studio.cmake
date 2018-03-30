@@ -1,7 +1,7 @@
 # 2006-2008 (c) Viva64.com Team
 # 2008-2018 (c) OOO "Program Verification Systems"
 #
-# Version 5
+# Version 6
 
 cmake_minimum_required(VERSION 2.8.12)
 cmake_policy(SET CMP0054 NEW)
@@ -40,9 +40,19 @@ macro (pvs_studio_append_flags_from_property CXX C DIR PREFIX)
                 list(APPEND "${CXX}" "${FRAMEWORK}")
                 list(APPEND "${C}" "-iframework")
                 list(APPEND "${C}" "${FRAMEWORK}")
-            else ()
+                if (PVS_STUDIO_DEBUG)
+                    message("PVS-Studio: framework: ${FRAMEWORK}")
+                endif ()
+            elseif ("${PROP}" MATCHES "^\\$<.*>")
+                if (PVS_STUDIO_DEBUG)
+                    message("PVS-Studio: warning: ignored ${PREFIX}${PROP}")
+                endif ()
+            elseif (NOT "${PROP}" STREQUAL "")
                 list(APPEND "${CXX}" "${PREFIX}${PROP}")
                 list(APPEND "${C}" "${PREFIX}${PROP}")
+                if (PVS_STUDIO_DEBUG)
+                    message("PVS-Studio: compile flag: ${PREFIX}${PROP}")
+                endif ()
             endif()
         endforeach ()
     endif ()
@@ -216,6 +226,9 @@ macro(pvs_studio_get_recursive_targets TARGET)
     endforeach ()
 endmacro()
 
+option(PVS_STUDIO_DISABLE OFF "Disable PVS-Studio targets")
+option(PVS_STUDIO_DEBUG OFF "Add debug info")
+
 # pvs_studio_add_target
 # Target options:
 # ALL                           add this target to default build (default: off)
@@ -293,7 +306,6 @@ function (pvs_studio_add_target)
                        COMMAND ${PVS_STUDIO_CONFIG_COMMAND}
                        WORKING_DIRECTORY "${BINARY_DIR}"
                        COMMENT "Generating PVS-Studio.cfg")
-
 
     if (NOT "${PVS_STUDIO_PREPROCESSOR}" MATCHES "^${PVS_STUDIO_SUPPORTED_PREPROCESSORS}$")
         message(FATAL_ERROR "Preprocessor ${PVS_STUDIO_PREPROCESSOR} isn't supported. Available options: ${PVS_STUDIO_SUPPORTED_PREPROCESSORS}.")
