@@ -1,7 +1,7 @@
 # 2006-2008 (c) Viva64.com Team
 # 2008-2018 (c) OOO "Program Verification Systems"
 #
-# Version 6
+# Version 7
 
 cmake_minimum_required(VERSION 2.8.12)
 cmake_policy(SET CMP0054 NEW)
@@ -240,6 +240,7 @@ option(PVS_STUDIO_DEBUG OFF "Add debug info")
 # OUTPUT                        prints report to stdout
 # LOG path                      path to report (default: ${CMAKE_CURRENT_BINARY_DIR}/PVS-Studio.log)
 # FORMAT format                 format of report
+# MODE mode                     analyzers/levels filter (default: GA:1,2)
 #
 # Analyzer options:
 # PLATFORM name                 linux32/linux64 (default: linux64)
@@ -276,7 +277,7 @@ function (pvs_studio_add_target)
 
     set(OPTIONAL OUTPUT ALL RECURSIVE)
     set(SINGLE LICENSE CONFIG TARGET LOG FORMAT BIN CONVERTER PLATFORM PREPROCESSOR CFG_TEXT)
-    set(MULTI SOURCES C_FLAGS CXX_FLAGS ARGS DEPENDS ANALYZE)
+    set(MULTI SOURCES C_FLAGS CXX_FLAGS ARGS DEPENDS ANALYZE MODE)
     cmake_parse_arguments(PVS_STUDIO "${OPTIONAL}" "${SINGLE}" "${MULTI}" ${ARGN})
 
     if ("${PVS_STUDIO_CFG}" STREQUAL "" OR NOT "${PVS_STUDIO_CFG_TEXT}" STREQUAL "")
@@ -285,7 +286,7 @@ function (pvs_studio_add_target)
         set(PVS_STUDIO_EMPTY_CONFIG OFF)
     endif ()
 
-    default(PVS_STUDIO_CFG_TEXT "analysis-mode=4")
+    default(PVS_STUDIO_CFG_TEXT "analysis-mode=31")
     default(PVS_STUDIO_CONFIG "${CMAKE_BINARY_DIR}/PVS-Studio.cfg")
     default(PVS_STUDIO_C_FLAGS "")
     default(PVS_STUDIO_CXX_FLAGS "")
@@ -293,8 +294,11 @@ function (pvs_studio_add_target)
     default(PVS_STUDIO_LOG "PVS-Studio.log")
     default(PVS_STUDIO_BIN "pvs-studio-analyzer")
     default(PVS_STUDIO_CONVERTER "plog-converter")
+    default(PVS_STUDIO_MODE "GA:1,2")
     default(PVS_STUDIO_PREPROCESSOR "${DEFAULT_PREPROCESSOR}")
     default(PVS_STUDIO_PLATFORM "linux64")
+
+    string(REPLACE ";" "/" PVS_STUDIO_MODE "${PVS_STUDIO_MODE}")
 
     if (PVS_STUDIO_EMPTY_CONFIG)
         set(PVS_STUDIO_CONFIG_COMMAND echo "${PVS_STUDIO_CFG_TEXT}" > "${PVS_STUDIO_CONFIG}")
@@ -367,7 +371,7 @@ function (pvs_studio_add_target)
             endif ()
             list(APPEND COMMANDS
                  COMMAND mv "${PVS_STUDIO_LOG}" "${PVS_STUDIO_LOG}.pvs.raw"
-                 COMMAND "${PVS_STUDIO_CONVERTER}" -t "${PVS_STUDIO_FORMAT}" "${PVS_STUDIO_LOG}.pvs.raw" -o "${PVS_STUDIO_LOG}"
+                 COMMAND "${PVS_STUDIO_CONVERTER}" -t "${PVS_STUDIO_FORMAT}" "${PVS_STUDIO_LOG}.pvs.raw" -o "${PVS_STUDIO_LOG}" -a "${PVS_STUDIO_MODE}"
                  COMMAND rm -f "${PVS_STUDIO_LOG}.pvs.raw")
         endif ()
     else ()
