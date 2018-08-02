@@ -6,6 +6,8 @@
 cmake_minimum_required(VERSION 2.8.12)
 cmake_policy(SET CMP0054 NEW)
 
+include(expand_command)
+
 if(__PVS_STUDIO_INCLUDED)
     return()
 endif()
@@ -47,8 +49,6 @@ macro (pvs_studio_append_flags_from_property CXX C DIR PREFIX)
                 list(APPEND "${C}" "-iframework")
                 list(APPEND "${C}" "${FRAMEWORK}")
                 pvs_studio_log("framework: ${FRAMEWORK}")
-            elseif ("${PROP}" MATCHES "^\\$<.*>")
-                pvs_studio_log("warning: ignored ${PREFIX}${PROP}")
             elseif (NOT "${PROP}" STREQUAL "")
                 list(APPEND "${CXX}" "${PREFIX}${PROP}")
                 list(APPEND "${C}" "${PREFIX}${PROP}")
@@ -79,55 +79,17 @@ function (pvs_studio_set_directory_flags DIRECTORY CXX C)
     set("${C}" "${C_FLAGS}" PARENT_SCOPE)
 endfunction ()
 
-function (pvs_studio_get_target_dependencies TARGET RES_VAR)
-    set(RES)
-    get_target_property(LIBS "${TARGET}" LINK_LIBRARIES)
-    foreach (LIB IN LISTS LIBS)
-        if (TARGET "${LIB}")
-            list(FIND RES "${LIB}" INDEX)
-            if ("${INDEX}" LESS 0)
-                list(APPEND RES "${LIB}")
-                get_target_property(LIB_LIBS "${LIB}" INTERFACE_LINK_LIBRARIES)
-                if (LIB_LIBS)
-                    foreach (INTERFACE_LIB IN LISTS LIB_LIBS)
-                        if (TARGET "${INTERFACE_LIB}")
-                            list(APPEND RES "${INTERFACE_LIB}")
-                        endif ()
-                    endforeach ()
-
-                    list(REMOVE_DUPLICATES RES)
-                endif()
-            endif()
-        elseif (NOT "${LIB}" STREQUAL "LIBS-NOTFOUND")
-            pvs_studio_log("ignored library ${LIB}")
-        endif()
-	endforeach()
-
-    set("${RES_VAR}" "${RES}" PARENT_SCOPE)
-endfunction()
-
 function (pvs_studio_set_target_flags TARGET CXX C)
     set(CXX_FLAGS "${${CXX}}")
     set(C_FLAGS "${${C}}")
 
-    get_target_property(PROPERTY "${TARGET}" INCLUDE_DIRECTORIES)
-    pvs_studio_append_flags_from_property(CXX_FLAGS C_FLAGS "${DIRECTORY}" "-I")
+    set(prop_incdirs "$<TARGET_PROPERTY:${TARGET},INCLUDE_DIRECTORIES>")
+    list(APPEND CXX_FLAGS "$<$<BOOL:${prop_incdirs}>:-I$<JOIN:${prop_incdirs},$<SEMICOLON>-I>>")
+    list(APPEND C_FLAGS "$<$<BOOL:${prop_incdirs}>:-I$<JOIN:${prop_incdirs},$<SEMICOLON>-I>>")
 
-    get_target_property(PROPERTY "${TARGET}" COMPILE_DEFINITIONS)
-    pvs_studio_append_flags_from_property(CXX_FLAGS C_FLAGS "" "-D")
-
-    get_target_property(PROPERTY "${TARGET}" CXX_STANDARD)
-    pvs_studio_append_standard_flag(CXX_FLAGS "${PROPERTY}")
-
-    pvs_studio_get_target_dependencies("${TARGET}" LIBS)
-    foreach (LIB IN LISTS LIBS)
-        get_target_property(PROPERTY "${LIB}" INTERFACE_INCLUDE_DIRECTORIES)
-        pvs_studio_append_flags_from_property(CXX_FLAGS C_FLAGS "${DIRECTORY}" "-I")
-        get_target_property(PROPERTY "${LIB}" INTERFACE_SYSTEM_INCLUDE_DIRECTORIES)
-        pvs_studio_append_flags_from_property(CXX_FLAGS C_FLAGS "${DIRECTORY}" "-I")
-        get_target_property(PROPERTY "${LIB}" INTERFACE_COMPILE_DEFINITIONS)
-        pvs_studio_append_flags_from_property(CXX_FLAGS C_FLAGS "" "-D")
-    endforeach ()
+    set(prop_compdefs "$<TARGET_PROPERTY:${TARGET},COMPILE_DEFINITIONS>")
+    list(APPEND CXX_FLAGS "$<$<BOOL:${prop_compdefs}>:-D$<JOIN:${prop_compdefs},$<SEMICOLON>-D>>")
+    list(APPEND C_FLAGS "$<$<BOOL:${prop_compdefs}>:-D$<JOIN:${prop_compdefs},$<SEMICOLON>-D>>")
 
     set("${CXX}" "${CXX_FLAGS}" PARENT_SCOPE)
     set("${C}" "${C_FLAGS}" PARENT_SCOPE)
@@ -174,14 +136,17 @@ function (pvs_studio_analyze_file SOURCE SOURCE_DIR BINARY_DIR)
     get_filename_component(PARENT_DIR "${LOG}" DIRECTORY)
 
     if (EXISTS "${SOURCE}" AND NOT TARGET "${LOG}" AND NOT "${PVS_STUDIO_LANGUAGE}" STREQUAL "")
+
+        expandable_command(pvscmd "${PVS_STUDIO_BIN}" analyze
+                                    --output-file "${LOG}"
+                                    --source-file "${SOURCE}"
+                                    ${PVS_STUDIO_ARGS}
+                                    --cl-params "${PVS_STUDIO_CL_PARAMS}" "${SOURCE}")
+
         add_custom_command(OUTPUT "${LOG}"
                            COMMAND mkdir -p "${PARENT_DIR}"
                            COMMAND rm -f "${LOG}"
-                           COMMAND "${PVS_STUDIO_BIN}" analyze
-                                                       --output-file "${LOG}"
-                                                       --source-file "${SOURCE}"
-                                                       ${PVS_STUDIO_ARGS}
-                                                       --cl-params ${PVS_STUDIO_CL_PARAMS} "${SOURCE}"
+                           COMMAND ${pvscmd}
                            WORKING_DIRECTORY "${BINARY_DIR}"
                            DEPENDS "${SOURCE}" "${PVS_STUDIO_CONFIG}"
                            IMPLICIT_DEPENDS "${PVS_STUDIO_LANGUAGE}" "${SOURCE}"
@@ -292,7 +257,7 @@ function (pvs_studio_add_target)
     set(MULTI SOURCES C_FLAGS CXX_FLAGS ARGS DEPENDS ANALYZE MODE)
     cmake_parse_arguments(PVS_STUDIO "${OPTIONAL}" "${SINGLE}" "${MULTI}" ${ARGN})
 
-    if ("${PVS_STUDIO_CFG}" STREQUAL "" OR NOT "${PVS_STUDIO_CFG_TEXT}" STREQUAL "")
+    if ("${PVS_STUDIO_CONFIG}" STREQUAL "" OR NOT "${PVS_STUDIO_CFG_TEXT}" STREQUAL "")
         set(PVS_STUDIO_EMPTY_CONFIG ON)
     else ()
         set(PVS_STUDIO_EMPTY_CONFIG OFF)
@@ -429,4 +394,3 @@ function (pvs_studio_add_target)
 
     add_custom_target("${PVS_STUDIO_TARGET}" ${ALL} ${COMMANDS} WORKING_DIRECTORY "${CMAKE_BINARY_DIR}" DEPENDS ${PVS_STUDIO_DEPENDS} "${PVS_STUDIO_LOG}")
 endfunction ()
-
