@@ -418,6 +418,7 @@ function (pvs_studio_add_target)
                 set(PVS_STUDIO_FORMAT "errorfile")
             endif ()
             list(APPEND COMMANDS
+                COMMAND rm -f "${PVS_STUDIO_LOG}.pvs.raw"
                 COMMAND mv "${PVS_STUDIO_LOG}" "${PVS_STUDIO_LOG}.pvs.raw"
                 COMMAND "${PVS_STUDIO_CONVERTER}" -t "${PVS_STUDIO_FORMAT}" "${PVS_STUDIO_LOG}.pvs.raw" -o "${PVS_STUDIO_LOG}" -a "${PVS_STUDIO_MODE}")
             if(NOT PVS_STUDIO_KEEP_COMBINED_PLOG)
