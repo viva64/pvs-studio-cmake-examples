@@ -1,7 +1,7 @@
 # 2006-2008 (c) Viva64.com Team
 # 2008-2018 (c) OOO "Program Verification Systems"
 #
-# Version 9
+# Version 10
 
 cmake_minimum_required(VERSION 2.8.12)
 cmake_policy(SET CMP0054 NEW)
@@ -271,6 +271,7 @@ option(PVS_STUDIO_DEBUG OFF "Add debug info")
 # LOG path                      path to report (default: ${CMAKE_CURRENT_BINARY_DIR}/PVS-Studio.log)
 # FORMAT format                 format of report
 # MODE mode                     analyzers/levels filter (default: GA:1,2)
+# HIDE_HELP                     do not print help message
 #
 # Analyzer options:
 # PLATFORM name                 linux32/linux64 (default: linux64)
@@ -305,7 +306,7 @@ function (pvs_studio_add_target)
         set(DEFAULT_PREPROCESSOR "gcc")
     endif ()
 
-    set(OPTIONAL OUTPUT ALL RECURSIVE)
+    set(OPTIONAL OUTPUT ALL RECURSIVE HIDE_HELP)
     set(SINGLE LICENSE CONFIG TARGET LOG FORMAT BIN CONVERTER PLATFORM PREPROCESSOR CFG_TEXT)
     set(MULTI SOURCES C_FLAGS CXX_FLAGS ARGS DEPENDS ANALYZE MODE)
     cmake_parse_arguments(PVS_STUDIO "${OPTIONAL}" "${SINGLE}" "${MULTI}" ${ARGN})
@@ -448,7 +449,11 @@ function (pvs_studio_add_target)
     endif ()
 
     if (PVS_STUDIO_OUTPUT)
-        set(COMMANDS COMMAND cat "${PVS_STUDIO_LOG}" 1>&2)
+        if (PVS_STUDIO_HIDE_HELP)
+            set(COMMANDS COMMAND cat "${PVS_STUDIO_LOG}" | grep -v " error: Help:" 1>&2)
+        else()
+            set(COMMANDS COMMAND cat "${PVS_STUDIO_LOG}" 1>&2)
+        endif()
     else ()
         set(COMMANDS "")
     endif ()
