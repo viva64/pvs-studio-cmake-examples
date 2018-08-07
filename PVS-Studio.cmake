@@ -279,6 +279,7 @@ option(PVS_STUDIO_DEBUG OFF "Add debug info")
 # LICENSE path                  path to PVS-Studio.lic (default: ~/.config/PVS-Studio/PVS-Studio.lic)
 # CONFIG path                   path to PVS-Studio.cfg
 # CFG_TEXT text                 embedded PVS-Studio.cfg
+# KEEP_COMBINED_PLOG            do not delete combined plog file *.pvs.raw for further processing with plog-converter
 #
 # Misc options:
 # DEPENDS targets..             additional target dependencies
@@ -306,7 +307,7 @@ function (pvs_studio_add_target)
         set(DEFAULT_PREPROCESSOR "gcc")
     endif ()
 
-    set(OPTIONAL OUTPUT ALL RECURSIVE HIDE_HELP)
+    set(OPTIONAL OUTPUT ALL RECURSIVE HIDE_HELP KEEP_COMBINED_PLOG)
     set(SINGLE LICENSE CONFIG TARGET LOG FORMAT BIN CONVERTER PLATFORM PREPROCESSOR CFG_TEXT)
     set(MULTI SOURCES C_FLAGS CXX_FLAGS ARGS DEPENDS ANALYZE MODE)
     cmake_parse_arguments(PVS_STUDIO "${OPTIONAL}" "${SINGLE}" "${MULTI}" ${ARGN})
@@ -427,9 +428,12 @@ function (pvs_studio_add_target)
                 set(PVS_STUDIO_FORMAT "errorfile")
             endif ()
             list(APPEND COMMANDS
-                 COMMAND mv "${PVS_STUDIO_LOG}" "${PVS_STUDIO_LOG}.pvs.raw"
-                 COMMAND "${PVS_STUDIO_CONVERTER}" -t "${PVS_STUDIO_FORMAT}" "${PVS_STUDIO_LOG}.pvs.raw" -o "${PVS_STUDIO_LOG}" -a "${PVS_STUDIO_MODE}"
-                 COMMAND rm -f "${PVS_STUDIO_LOG}.pvs.raw")
+                COMMAND rm -f "${PVS_STUDIO_LOG}.pvs.raw"
+                COMMAND mv "${PVS_STUDIO_LOG}" "${PVS_STUDIO_LOG}.pvs.raw"
+                COMMAND "${PVS_STUDIO_CONVERTER}" -t "${PVS_STUDIO_FORMAT}" "${PVS_STUDIO_LOG}.pvs.raw" -o "${PVS_STUDIO_LOG}" -a "${PVS_STUDIO_MODE}")
+            if(NOT PVS_STUDIO_KEEP_COMBINED_PLOG)
+                list(APPEND COMMANDS COMMAND rm -f "${PVS_STUDIO_LOG}.pvs.raw")
+            endif()
         endif ()
     else ()
         set(COMMANDS COMMAND touch "${PVS_STUDIO_LOG}")
