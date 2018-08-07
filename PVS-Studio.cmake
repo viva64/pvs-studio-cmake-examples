@@ -20,6 +20,7 @@ if (PVS_STUDIO_AS_SCRIPT)
             endif ()
         else ()
             # A workaround for macOS frameworks (e.g. QtWidgets.framework)
+            # You can test this workaround on this project: https://github.com/easyaspi314/MidiEditor/tree/gba
             if (APPLE AND "${arg}" MATCHES "^-I(.*)\\.framework$")
                 STRING(REGEX REPLACE "^-I(.*)\\.framework$" "\\1.framework" framework "${arg}")
                 if (IS_ABSOLUTE "${framework}")
@@ -374,6 +375,8 @@ function (pvs_studio_add_target)
         endforeach ()
     endif ()
 
+    set(inc_path)
+
     foreach (TARGET ${PVS_STUDIO_ANALYZE})
         set(DIR "${CMAKE_CURRENT_SOURCE_DIR}")
         string(FIND "${TARGET}" ":" DELIM)
@@ -390,6 +393,12 @@ function (pvs_studio_add_target)
         endif ()
         pvs_studio_analyze_target("${TARGET}" "${DIR}")
         list(APPEND PVS_STUDIO_DEPENDS "${TARGET}")
+
+        if ("${inc_path}" STREQUAL "")
+            set(inc_path "$<TARGET_PROPERTY:${TARGET},INCLUDE_DIRECTORIES>")
+        else ()
+            set(inc_path "${inc_path}$<SEMICOLON>$<TARGET_PROPERTY:${TARGET},INCLUDE_DIRECTORIES>")
+        endif ()
     endforeach ()
 
     foreach (TARGET ${PVS_STUDIO_RECURSIVE_TARGETS_NEW})
@@ -445,4 +454,7 @@ function (pvs_studio_add_target)
     endif ()
 
     add_custom_target("${PVS_STUDIO_TARGET}" ${ALL} ${COMMANDS} WORKING_DIRECTORY "${CMAKE_BINARY_DIR}" DEPENDS ${PVS_STUDIO_DEPENDS} "${PVS_STUDIO_LOG}")
+
+    # A workaround to add implicit dependencies of source files from include directories
+    set_target_properties("${PVS_STUDIO_TARGET}" PROPERTIES INCLUDE_DIRECTORIES "${inc_path}")
 endfunction ()
