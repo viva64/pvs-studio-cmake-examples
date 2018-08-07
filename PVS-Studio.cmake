@@ -1,7 +1,7 @@
 # 2006-2008 (c) Viva64.com Team
 # 2008-2018 (c) OOO "Program Verification Systems"
 #
-# Version 9
+# Version 10
 
 cmake_minimum_required(VERSION 2.8.12)
 cmake_policy(SET CMP0054 NEW)
@@ -20,6 +20,7 @@ if (PVS_STUDIO_AS_SCRIPT)
             endif ()
         else ()
             # A workaround for macOS frameworks (e.g. QtWidgets.framework)
+            # You can test this workaround on this project: https://github.com/easyaspi314/MidiEditor/tree/gba
             if (APPLE AND "${arg}" MATCHES "^-I(.*)\\.framework$")
                 STRING(REGEX REPLACE "^-I(.*)\\.framework$" "\\1.framework" framework "${arg}")
                 if (IS_ABSOLUTE "${framework}")
@@ -270,6 +271,7 @@ option(PVS_STUDIO_DEBUG OFF "Add debug info")
 # LOG path                      path to report (default: ${CMAKE_CURRENT_BINARY_DIR}/PVS-Studio.log)
 # FORMAT format                 format of report
 # MODE mode                     analyzers/levels filter (default: GA:1,2)
+# HIDE_HELP                     do not print help message
 #
 # Analyzer options:
 # PLATFORM name                 linux32/linux64 (default: linux64)
@@ -305,7 +307,7 @@ function (pvs_studio_add_target)
         set(DEFAULT_PREPROCESSOR "gcc")
     endif ()
 
-    set(OPTIONAL OUTPUT ALL RECURSIVE KEEP_COMBINED_PLOG)
+    set(OPTIONAL OUTPUT ALL RECURSIVE HIDE_HELP KEEP_COMBINED_PLOG)
     set(SINGLE LICENSE CONFIG TARGET LOG FORMAT BIN CONVERTER PLATFORM PREPROCESSOR CFG_TEXT)
     set(MULTI SOURCES C_FLAGS CXX_FLAGS ARGS DEPENDS ANALYZE MODE)
     cmake_parse_arguments(PVS_STUDIO "${OPTIONAL}" "${SINGLE}" "${MULTI}" ${ARGN})
@@ -375,6 +377,8 @@ function (pvs_studio_add_target)
         endforeach ()
     endif ()
 
+    set(inc_path)
+
     foreach (TARGET ${PVS_STUDIO_ANALYZE})
         set(DIR "${CMAKE_CURRENT_SOURCE_DIR}")
         string(FIND "${TARGET}" ":" DELIM)
@@ -391,6 +395,12 @@ function (pvs_studio_add_target)
         endif ()
         pvs_studio_analyze_target("${TARGET}" "${DIR}")
         list(APPEND PVS_STUDIO_DEPENDS "${TARGET}")
+
+        if ("${inc_path}" STREQUAL "")
+            set(inc_path "$<TARGET_PROPERTY:${TARGET},INCLUDE_DIRECTORIES>")
+        else ()
+            set(inc_path "${inc_path}$<SEMICOLON>$<TARGET_PROPERTY:${TARGET},INCLUDE_DIRECTORIES>")
+        endif ()
     endforeach ()
 
     foreach (TARGET ${PVS_STUDIO_RECURSIVE_TARGETS_NEW})
@@ -443,10 +453,17 @@ function (pvs_studio_add_target)
     endif ()
 
     if (PVS_STUDIO_OUTPUT)
-        set(COMMANDS COMMAND cat "${PVS_STUDIO_LOG}" 1>&2)
+        if (PVS_STUDIO_HIDE_HELP)
+            set(COMMANDS COMMAND cat "${PVS_STUDIO_LOG}" | grep -v " error: Help:" 1>&2)
+        else()
+            set(COMMANDS COMMAND cat "${PVS_STUDIO_LOG}" 1>&2)
+        endif()
     else ()
         set(COMMANDS "")
     endif ()
 
     add_custom_target("${PVS_STUDIO_TARGET}" ${ALL} ${COMMANDS} WORKING_DIRECTORY "${CMAKE_BINARY_DIR}" DEPENDS ${PVS_STUDIO_DEPENDS} "${PVS_STUDIO_LOG}")
+
+    # A workaround to add implicit dependencies of source files from include directories
+    set_target_properties("${PVS_STUDIO_TARGET}" PROPERTIES INCLUDE_DIRECTORIES "${inc_path}")
 endfunction ()
