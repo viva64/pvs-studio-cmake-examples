@@ -25,7 +25,7 @@ all:
 	cd example-5/build && make -j8 example5.analyze
 
 	mkdir -p example-6/build
-	cd example-6/build && cmake ..
+	cd example-6/build && cmake -G Ninja ..
 	cd example-6/build && make -j8
 	cd example-6/build && make -j8 pvs-studio-cmake-example-6
 

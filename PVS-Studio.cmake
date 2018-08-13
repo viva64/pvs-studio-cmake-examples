@@ -179,6 +179,15 @@ function (pvs_studio_analyze_file SOURCE SOURCE_DIR BINARY_DIR)
     get_filename_component(PARENT_DIR "${LOG}" DIRECTORY)
 
     if (EXISTS "${SOURCE}" AND NOT TARGET "${LOG}" AND NOT "${PVS_STUDIO_LANGUAGE}" STREQUAL "")
+        # A workaround to support implicit dependencies for ninja generators.
+        set(depPvsArg)
+        set(depCommandArg)
+        if (CMAKE_VERSION VERSION_GREATER 3.6 AND "${CMAKE_GENERATOR}" STREQUAL "Ninja")
+            pvs_studio_relative_path(relLog "${CMAKE_BINARY_DIR}" "${LOG}")
+            set(depPvsArg --dep-file "${LOG}.d" --dep-file-target "${relLog}")
+            set(depCommandArg DEPFILE "${LOG}.d")
+        endif ()
+
         # https://public.kitware.com/Bug/print_bug_page.php?bug_id=14353
         # https://public.kitware.com/Bug/file/5436/expand_command.cmake
         #
@@ -186,6 +195,7 @@ function (pvs_studio_analyze_file SOURCE SOURCE_DIR BINARY_DIR)
         set(cmdline "${PVS_STUDIO_BIN}" analyze
                     --output-file "${LOG}"
                     --source-file "${SOURCE}"
+                    ${depPvsArg}
                     ${PVS_STUDIO_ARGS}
                     --cl-params "${PVS_STUDIO_CL_PARAMS}" "${SOURCE}")
 
@@ -203,6 +213,7 @@ function (pvs_studio_analyze_file SOURCE SOURCE_DIR BINARY_DIR)
                            WORKING_DIRECTORY "${BINARY_DIR}"
                            DEPENDS "${SOURCE}" "${PVS_STUDIO_CONFIG}"
                            IMPLICIT_DEPENDS "${PVS_STUDIO_LANGUAGE}" "${SOURCE}"
+                           ${depCommandArg}
                            VERBATIM
                            COMMENT "Analyzing ${PVS_STUDIO_LANGUAGE} file ${SOURCE_RELATIVE}")
         list(APPEND PLOGS "${LOG}")
