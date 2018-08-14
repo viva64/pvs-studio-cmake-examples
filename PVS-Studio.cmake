@@ -465,7 +465,7 @@ function (pvs_studio_add_target)
 
     if (PVS_STUDIO_OUTPUT)
         if (PVS_STUDIO_HIDE_HELP)
-            set(COMMANDS COMMAND cat "${PVS_STUDIO_LOG}" | grep -v " error: Help:" 1>&2)
+            set(COMMANDS COMMAND grep -v " error: Help:" ${PVS_STUDIO_LOG} 1>&2 || exit 0)
         else()
             set(COMMANDS COMMAND cat "${PVS_STUDIO_LOG}" 1>&2)
         endif()
