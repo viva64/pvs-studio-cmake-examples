@@ -276,6 +276,7 @@ option(PVS_STUDIO_DEBUG OFF "Add debug info")
 # TARGET target                 name of analysis target (default: pvs)
 # ANALYZE targets...            targets to analyze
 # RECURSIVE                     analyze target's dependencies (requires CMake 3.5+)
+# COMPILE_COMMANDS              use compile_commands.json mode
 #
 # Output options:
 # OUTPUT                        prints report to stdout
@@ -318,7 +319,7 @@ function (pvs_studio_add_target)
         set(DEFAULT_PREPROCESSOR "gcc")
     endif ()
 
-    set(OPTIONAL OUTPUT ALL RECURSIVE HIDE_HELP KEEP_COMBINED_PLOG)
+    set(OPTIONAL OUTPUT ALL RECURSIVE HIDE_HELP KEEP_COMBINED_PLOG COMPILE_COMMANDS)
     set(SINGLE LICENSE CONFIG TARGET LOG FORMAT BIN CONVERTER PLATFORM PREPROCESSOR CFG_TEXT)
     set(MULTI SOURCES C_FLAGS CXX_FLAGS ARGS DEPENDS ANALYZE MODE)
     cmake_parse_arguments(PVS_STUDIO "${OPTIONAL}" "${SINGLE}" "${MULTI}" ${ARGN})
@@ -430,18 +431,36 @@ function (pvs_studio_add_target)
         pvs_studio_analyze_file("${SOURCE}" "${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_CURRENT_BINARY_DIR}")
     endforeach ()
 
+    if (PVS_STUDIO_COMPILE_COMMANDS)
+        set(COMPILE_COMMANDS_LOG "${PVS_STUDIO_LOG}.pvs.analyzer.raw")
+        if (NOT CMAKE_EXPORT_COMPILE_COMMANDS)
+            message(FATAL_ERROR "You should set CMAKE_EXPORT_COMPILE_COMMANDS to TRUE")
+        endif ()
+        add_custom_command(
+            OUTPUT "${COMPILE_COMMANDS_LOG}"
+            COMMAND "${PVS_STUDIO_BIN}" analyze -i
+                    --output-file "${COMPILE_COMMANDS_LOG}.always"
+                    ${PVS_STUDIO_ARGS}
+            COMMENT "Analyzing with PVS-Studio"
+            WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
+            DEPENDS "${PVS_STUDIO_CONFIG}"
+        )
+        list(APPEND PVS_STUDIO_PLOGS_LOGS "${COMPILE_COMMANDS_LOG}.always")
+        list(APPEND PVS_STUDIO_PLOGS_DEPENDENCIES "${COMPILE_COMMANDS_LOG}")
+    endif ()
+
     pvs_studio_relative_path(LOG_RELATIVE "${CMAKE_BINARY_DIR}" "${PVS_STUDIO_LOG}")
-    if (PVS_STUDIO_PLOGS)
-        set(COMMANDS COMMAND cat ${PVS_STUDIO_PLOGS} > "${PVS_STUDIO_LOG}")
+    if (PVS_STUDIO_PLOGS OR PVS_STUDIO_COMPILE_COMMANDS)
+        set(COMMANDS COMMAND cat ${PVS_STUDIO_PLOGS} ${PVS_STUDIO_PLOGS_LOGS} > "${PVS_STUDIO_LOG}")
         set(COMMENT "Generating ${LOG_RELATIVE}")
         if (NOT "${PVS_STUDIO_FORMAT}" STREQUAL "" OR PVS_STUDIO_OUTPUT)
             if ("${PVS_STUDIO_FORMAT}" STREQUAL "")
                 set(PVS_STUDIO_FORMAT "errorfile")
             endif ()
             list(APPEND COMMANDS
-                COMMAND rm -f "${PVS_STUDIO_LOG}.pvs.raw"
-                COMMAND mv "${PVS_STUDIO_LOG}" "${PVS_STUDIO_LOG}.pvs.raw"
-                COMMAND "${PVS_STUDIO_CONVERTER}" -t "${PVS_STUDIO_FORMAT}" "${PVS_STUDIO_LOG}.pvs.raw" -o "${PVS_STUDIO_LOG}" -a "${PVS_STUDIO_MODE}")
+                 COMMAND rm -f "${PVS_STUDIO_LOG}.pvs.raw"
+                 COMMAND mv "${PVS_STUDIO_LOG}" "${PVS_STUDIO_LOG}.pvs.raw"
+                 COMMAND "${PVS_STUDIO_CONVERTER}" -t "${PVS_STUDIO_FORMAT}" "${PVS_STUDIO_LOG}.pvs.raw" -o "${PVS_STUDIO_LOG}" -a "${PVS_STUDIO_MODE}")
             if(NOT PVS_STUDIO_KEEP_COMBINED_PLOG)
                 list(APPEND COMMANDS COMMAND rm -f "${PVS_STUDIO_LOG}.pvs.raw")
             endif()
@@ -454,7 +473,7 @@ function (pvs_studio_add_target)
     add_custom_command(OUTPUT "${PVS_STUDIO_LOG}"
                        ${COMMANDS}
                        COMMENT "${COMMENT}"
-                       DEPENDS ${PVS_STUDIO_PLOGS}
+                       DEPENDS ${PVS_STUDIO_PLOGS} ${PVS_STUDIO_PLOGS_DEPENDENCIES}
                        WORKING_DIRECTORY "${CMAKE_BINARY_DIR}")
 
     if (PVS_STUDIO_ALL)

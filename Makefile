@@ -26,8 +26,12 @@ all:
 
 	mkdir -p example-6/build
 	cd example-6/build && cmake -G Ninja ..
-	cd example-6/build && make -j8
-	cd example-6/build && make -j8 pvs-studio-cmake-example-6
+	cd example-6/build && ninja
+
+	mkdir -p example-7/build
+	cd example-7/build && cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=On ..
+	cd example-7/build && make -j8
+	cd example-7/build && make -j8 pvs-studio-cmake-example-7
 
 clean:
 	rm -rf example-1/build
@@ -36,3 +40,4 @@ clean:
 	rm -rf example-4/build
 	rm -rf example-5/build
 	rm -rf example-6/build
+	rm -rf example-7/build
