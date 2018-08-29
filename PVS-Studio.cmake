@@ -1,7 +1,7 @@
 # 2006-2008 (c) Viva64.com Team
 # 2008-2018 (c) OOO "Program Verification Systems"
 #
-# Version 10
+# Version 11
 
 cmake_minimum_required(VERSION 2.8.12)
 cmake_policy(SET CMP0054 NEW)
