@@ -334,15 +334,36 @@ function (pvs_studio_add_target)
     default(PVS_STUDIO_CXX_FLAGS "")
     default(PVS_STUDIO_TARGET "pvs")
     default(PVS_STUDIO_LOG "PVS-Studio.log")
+
+    set(PATHS)
     if (WIN32)
         set(ROOT "PROGRAMFILES(X86)")
         set(ROOT "$ENV{${ROOT}}/PVS-Studio")
         string(REPLACE \\ / ROOT "${ROOT}")
-        default(PVS_STUDIO_BIN "${ROOT}/CompilerCommandsAnalyzer.exe")
-        default(PVS_STUDIO_CONVERTER "${ROOT}/HtmlGenerator.exe")
+
+        if (EXISTS "${ROOT}")
+            set(PATHS "${ROOT}")
+        endif ()
+
+        default(PVS_STUDIO_BIN "CompilerCommandsAnalyzer.exe")
+        default(PVS_STUDIO_CONVERTER "HtmlGenerator.exe")
     else ()
         default(PVS_STUDIO_BIN "pvs-studio-analyzer")
         default(PVS_STUDIO_CONVERTER "plog-converter")
+    endif ()
+
+    find_program(PVS_STUDIO_BIN_PATH "${PVS_STUDIO_BIN}" ${PATHS})
+    set(PVS_STUDIO_BIN "${PVS_STUDIO_BIN_PATH}")
+
+    if (NOT EXISTS "${PVS_STUDIO_BIN}")
+        message(FATAL_ERROR "pvs-studio-analyzer is not found")
+    endif ()
+
+    find_program(PVS_STUDIO_CONVERTER_PATH "${PVS_STUDIO_CONVERTER}" ${PATHS})
+    set(PVS_STUDIO_CONVERTER "${PVS_STUDIO_CONVERTER_PATH}")
+
+    if (NOT EXISTS "${PVS_STUDIO_CONVERTER}")
+        message(FATAL_ERROR "plog-converter is not found")
     endif ()
 
     default(PVS_STUDIO_MODE "GA:1,2")
