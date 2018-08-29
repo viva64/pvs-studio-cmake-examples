@@ -64,7 +64,7 @@ endfunction ()
 
 function (pvs_studio_relative_path VAR ROOT FILEPATH)
     set("${VAR}" "${FILEPATH}" PARENT_SCOPE)
-    if ("${FILEPATH}" MATCHES "^/.*$")
+    if ("${FILEPATH}" MATCHES "^/.*$" OR "${FILEPATH}" MATCHES "^.:/.*$")
         file(RELATIVE_PATH RPATH "${ROOT}" "${FILEPATH}")
         if (NOT "${RPATH}" MATCHES "^\\.\\..*$")
             set("${VAR}" "${RPATH}" PARENT_SCOPE)
@@ -73,7 +73,7 @@ function (pvs_studio_relative_path VAR ROOT FILEPATH)
 endfunction ()
 
 function (pvs_studio_join_path VAR DIR1 DIR2)
-    if ("${DIR2}" MATCHES "^(/|~).*$" OR "${DIR1}" STREQUAL "")
+    if ("${DIR2}" MATCHES "^(/|~|.:/).*$" OR "${DIR1}" STREQUAL "")
         set("${VAR}" "${DIR2}" PARENT_SCOPE)
     else ()
         set("${VAR}" "${DIR1}/${DIR2}" PARENT_SCOPE)
@@ -207,8 +207,8 @@ function (pvs_studio_analyze_file SOURCE SOURCE_DIR BINARY_DIR)
         )
 
         add_custom_command(OUTPUT "${LOG}"
-                           COMMAND mkdir -p "${PARENT_DIR}"
-                           COMMAND rm -f "${LOG}"
+                           COMMAND "${CMAKE_COMMAND}" -E make_directory "${PARENT_DIR}"
+                           COMMAND "${CMAKE_COMMAND}" -E remove_directory "${LOG}"
                            COMMAND ${pvscmd}
                            WORKING_DIRECTORY "${BINARY_DIR}"
                            DEPENDS "${SOURCE}" "${PVS_STUDIO_CONFIG}"
@@ -302,19 +302,17 @@ option(PVS_STUDIO_DEBUG OFF "Add debug info")
 # CXX_FLAGS flags...            additional CXX_FLAGS
 # ARGS args...                  additional pvs-studio-analyzer flags
 function (pvs_studio_add_target)
-    if (WIN32)
-        return()
-    endif ()
-
     macro (default VAR VALUE)
         if ("${${VAR}}" STREQUAL "")
             set("${VAR}" "${VALUE}")
         endif ()
     endmacro ()
 
-    set(PVS_STUDIO_SUPPORTED_PREPROCESSORS "gcc|clang")
+    set(PVS_STUDIO_SUPPORTED_PREPROCESSORS "gcc|clang|visualcpp")
     if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
         set(DEFAULT_PREPROCESSOR "clang")
+	elseif (MSVC)
+		set(DEFAULT_PREPROCESSOR "visualcpp")
     else ()
         set(DEFAULT_PREPROCESSOR "gcc")
     endif ()
@@ -336,18 +334,31 @@ function (pvs_studio_add_target)
     default(PVS_STUDIO_CXX_FLAGS "")
     default(PVS_STUDIO_TARGET "pvs")
     default(PVS_STUDIO_LOG "PVS-Studio.log")
-    default(PVS_STUDIO_BIN "pvs-studio-analyzer")
-    default(PVS_STUDIO_CONVERTER "plog-converter")
+	if (WIN32)
+		set(ROOT "PROGRAMFILES(X86)")
+		set(ROOT "$ENV{${ROOT}}/PVS-Studio")
+		string(REPLACE \\ / ROOT "${ROOT}")
+		default(PVS_STUDIO_BIN "${ROOT}/CompilerCommandsAnalyzer.exe")
+		default(PVS_STUDIO_CONVERTER "${ROOT}/HtmlGenerator.exe")
+	else ()
+        default(PVS_STUDIO_BIN "pvs-studio-analyzer")
+		default(PVS_STUDIO_CONVERTER "plog-converter")
+	endif ()
+    
     default(PVS_STUDIO_MODE "GA:1,2")
     default(PVS_STUDIO_PREPROCESSOR "${DEFAULT_PREPROCESSOR}")
-    default(PVS_STUDIO_PLATFORM "linux64")
+	if (WIN32)
+	    default(PVS_STUDIO_PLATFORM "x64")
+	else ()
+	    default(PVS_STUDIO_PLATFORM "linux64")
+	endif ()
 
     string(REPLACE ";" "/" PVS_STUDIO_MODE "${PVS_STUDIO_MODE}")
 
     if (PVS_STUDIO_EMPTY_CONFIG)
-        set(PVS_STUDIO_CONFIG_COMMAND echo "${PVS_STUDIO_CFG_TEXT}" > "${PVS_STUDIO_CONFIG}")
+        set(PVS_STUDIO_CONFIG_COMMAND "${CMAKE_COMMAND}" -E echo "${PVS_STUDIO_CFG_TEXT}" > "${PVS_STUDIO_CONFIG}")
     else ()
-        set(PVS_STUDIO_CONFIG_COMMAND touch "${PVS_STUDIO_CONFIG}")
+        set(PVS_STUDIO_CONFIG_COMMAND "${CMAKE_COMMAND}" -E touch "${PVS_STUDIO_CONFIG}")
     endif ()
 
     add_custom_command(OUTPUT "${PVS_STUDIO_CONFIG}"
@@ -451,23 +462,35 @@ function (pvs_studio_add_target)
 
     pvs_studio_relative_path(LOG_RELATIVE "${CMAKE_BINARY_DIR}" "${PVS_STUDIO_LOG}")
     if (PVS_STUDIO_PLOGS OR PVS_STUDIO_COMPILE_COMMANDS)
-        set(COMMANDS COMMAND cat ${PVS_STUDIO_PLOGS} ${PVS_STUDIO_PLOGS_LOGS} > "${PVS_STUDIO_LOG}")
+		if (WIN32)
+			string(REPLACE / \\ PVS_STUDIO_PLOGS "${PVS_STUDIO_PLOGS}")
+		endif ()
+		if (WIN32)
+			set(COMMANDS COMMAND type ${PVS_STUDIO_PLOGS} ${PVS_STUDIO_PLOGS_LOGS} > "${PVS_STUDIO_LOG}")
+		else ()
+			set(COMMANDS COMMAND cat ${PVS_STUDIO_PLOGS} ${PVS_STUDIO_PLOGS_LOGS} > "${PVS_STUDIO_LOG}")
+		endif ()
         set(COMMENT "Generating ${LOG_RELATIVE}")
         if (NOT "${PVS_STUDIO_FORMAT}" STREQUAL "" OR PVS_STUDIO_OUTPUT)
             if ("${PVS_STUDIO_FORMAT}" STREQUAL "")
                 set(PVS_STUDIO_FORMAT "errorfile")
             endif ()
             list(APPEND COMMANDS
-                 COMMAND rm -f "${PVS_STUDIO_LOG}.pvs.raw"
-                 COMMAND mv "${PVS_STUDIO_LOG}" "${PVS_STUDIO_LOG}.pvs.raw"
-                 COMMAND "${PVS_STUDIO_CONVERTER}" -t "${PVS_STUDIO_FORMAT}" "${PVS_STUDIO_LOG}.pvs.raw" -o "${PVS_STUDIO_LOG}" -a "${PVS_STUDIO_MODE}")
+                COMMAND "${CMAKE_COMMAND}" -E remove -f "${PVS_STUDIO_LOG}.pvs.raw"
+                COMMAND "${CMAKE_COMMAND}" -E rename "${PVS_STUDIO_LOG}" "${PVS_STUDIO_LOG}.pvs.raw"
+                COMMAND "${PVS_STUDIO_CONVERTER}" -t "${PVS_STUDIO_FORMAT}" "${PVS_STUDIO_LOG}.pvs.raw" -o "${PVS_STUDIO_LOG}" -a "${PVS_STUDIO_MODE}"
+                )
             if(NOT PVS_STUDIO_KEEP_COMBINED_PLOG)
-                list(APPEND COMMANDS COMMAND rm -f "${PVS_STUDIO_LOG}.pvs.raw")
+                list(APPEND COMMANDS COMMAND "${CMAKE_COMMAND}" -E remove -f "${PVS_STUDIO_LOG}.pvs.raw")
             endif()
         endif ()
     else ()
-        set(COMMANDS COMMAND touch "${PVS_STUDIO_LOG}")
+        set(COMMANDS COMMAND "${CMAKE_COMMAND}" -E touch "${PVS_STUDIO_LOG}")
         set(COMMENT "Generating ${LOG_RELATIVE}: no sources found")
+    endif ()
+
+    if (WIN32)
+        string(REPLACE / \\ PVS_STUDIO_LOG "${PVS_STUDIO_LOG}")
     endif ()
 
     add_custom_command(OUTPUT "${PVS_STUDIO_LOG}"
@@ -483,9 +506,11 @@ function (pvs_studio_add_target)
     endif ()
 
     if (PVS_STUDIO_OUTPUT)
-        if (PVS_STUDIO_HIDE_HELP)
+        if (PVS_STUDIO_HIDE_HELP AND NOT WIN32)
             set(COMMANDS COMMAND grep -v " error: Help:" ${PVS_STUDIO_LOG} 1>&2 || exit 0)
-        else()
+        elseif (WIN32)
+            set(COMMANDS COMMAND type "${PVS_STUDIO_LOG}" 1>&2)
+        else ()
             set(COMMANDS COMMAND cat "${PVS_STUDIO_LOG}" 1>&2)
         endif()
     else ()
