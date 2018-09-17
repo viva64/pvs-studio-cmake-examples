@@ -1,7 +1,7 @@
 # 2006-2008 (c) Viva64.com Team
 # 2008-2018 (c) OOO "Program Verification Systems"
 #
-# Version 11
+# Version 12
 
 cmake_minimum_required(VERSION 2.8.12)
 cmake_policy(SET CMP0054 NEW)
@@ -374,7 +374,7 @@ function (pvs_studio_add_target)
         default(PVS_STUDIO_PLATFORM "linux64")
     endif ()
 
-    string(REPLACE ";" "/" PVS_STUDIO_MODE "${PVS_STUDIO_MODE}")
+    string(REPLACE ";" "+" PVS_STUDIO_MODE "${PVS_STUDIO_MODE}")
 
     if (PVS_STUDIO_EMPTY_CONFIG)
         set(PVS_STUDIO_CONFIG_COMMAND "${CMAKE_COMMAND}" -E echo "${PVS_STUDIO_CFG_TEXT}" > "${PVS_STUDIO_CONFIG}")
