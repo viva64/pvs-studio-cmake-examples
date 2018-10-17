@@ -296,11 +296,11 @@ option(PVS_STUDIO_DEBUG OFF "Add debug info")
 # Misc options:
 # DEPENDS targets..             additional target dependencies
 # SOURCES path...               list of source files to analyze
-# BIN path                      path to pvs-studio-analyzer (default: pvs-studio-analyzer)
-# CONVERTER path                path to plog-converter (default: plog-converter)
+# BIN path                      path to pvs-studio-analyzer (Unix) or CompilerCommandsAnalyzer.exe (Windows)
+# CONVERTER path                path to plog-converter (Unix) or HtmlGenerator.exe (Windows)
 # C_FLAGS flags...              additional C_FLAGS
 # CXX_FLAGS flags...            additional CXX_FLAGS
-# ARGS args...                  additional pvs-studio-analyzer flags
+# ARGS args...                  additional pvs-studio-analyzer/CompilerCommandsAnalyzer.exe flags
 function (pvs_studio_add_target)
     macro (default VAR VALUE)
         if ("${${VAR}}" STREQUAL "")
