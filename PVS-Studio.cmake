@@ -272,11 +272,12 @@ option(PVS_STUDIO_DEBUG OFF "Add debug info")
 
 # pvs_studio_add_target
 # Target options:
-# ALL                           add this target to default build (default: off)
+# ALL                           add PVS-Studio target to default build (default: off)
 # TARGET target                 name of analysis target (default: pvs)
 # ANALYZE targets...            targets to analyze
 # RECURSIVE                     analyze target's dependencies (requires CMake 3.5+)
-# COMPILE_COMMANDS              use compile_commands.json mode
+# COMPILE_COMMANDS              use compile_commands.json instead of targets (specified by the 'ANALYZE' option) to determine files for analysis
+#                               (set CMAKE_EXPORT_COMPILE_COMMANDS, available only for Makefile and Ninja generators)
 #
 # Output options:
 # OUTPUT                        prints report to stdout

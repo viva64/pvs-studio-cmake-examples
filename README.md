@@ -1,8 +1,10 @@
 # Examples of PVS-Studio integration in CMake (CLion/QtCreator)
 
-For [PVS-Studio](https://www.viva64.com/en/pvs-studio/) analyzer integration into your project, you can use the **PVS-Studio.cmake** module. 
+PVS-Studio CMake module (**PVS-Studio.cmake**) can be used to integrate [PVS-Studio](https://www.viva64.com/en/pvs-studio/) analysis into CMake-based C and C++ cross-platform projects under Linux, Windows and macOS. This integration is generally build-system independent, however, several specific options work only under certain CMake generators. You can also use build-system specific analyzer integration (for example, PVS-Studio_Cmd for MSBuild projects under Windows), or integrate the analyzer directly into a build system.
 
-A few examples in this repository will help you learn how to use the CMake module in your **CMakeLists.txt** properly. 
+A few examples in this repository will help you to learn how to use the PVS-Studio CMake module in your **CMakeLists.txt** properly. 
+
+PVS-Studio CMake module uses the ```pvs_studio_add_target``` function to add a custom PVS-Studio target, which will be used to run the analysis. The detailed description of all available parameters of ```pvs_studio_add_target``` function is available in the comments inside the *PVS-Studio.cmake* file (search for ```pvs_studio_add_target``` function).
 
 ### Pay special attention:
 
@@ -38,6 +40,12 @@ CONFIG "/path/to/PVS-Studio.cfg")
 ```
 
 If you store the analyzer settings in a separate file, you can specify it in this way.
+
+```
+COMPILE_COMMANDS
+```
+
+Use this option instead of the 'ANALYZE' option to use compile_commands.json instead of project targets (specified by the 'ANALYZE' option) for determining files for analysis. Set CMAKE_EXPORT_COMPILE_COMMANDS variable to enable the generation of compile_commands.json (available only for Makefile and Ninja generators).
 
 The analyzer integration with our module is convenient if you want to use incremental analysis in the IDE (CLion/QtCreator). For a quick check of a project or the server analysis automatization you can use another method. 
 
