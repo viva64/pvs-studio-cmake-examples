@@ -1,0 +1,13 @@
+{
+    "version": 1,
+    "warnings": [
+        {
+            "CodeCurrent": 1473373,
+            "CodeNext": 11069,
+            "CodePrev": 123,
+            "ErrorCode": "V501",
+            "FileName": "main.cpp",
+            "Message": "There are identical sub-expressions to the left and to the right of the '!=' operator: argc != argc"
+        }
+    ]
+}
