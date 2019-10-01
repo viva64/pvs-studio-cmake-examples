@@ -211,7 +211,7 @@ function (pvs_studio_analyze_file SOURCE SOURCE_DIR BINARY_DIR)
                            COMMAND "${CMAKE_COMMAND}" -E remove_directory "${LOG}"
                            COMMAND ${pvscmd}
                            WORKING_DIRECTORY "${BINARY_DIR}"
-                           DEPENDS "${SOURCE}" "${PVS_STUDIO_CONFIG}"
+                           DEPENDS "${SOURCE}" "${PVS_STUDIO_CONFIG}" "${PVS_STUDIO_SUPPRESS_BASE}"
                            IMPLICIT_DEPENDS "${PVS_STUDIO_LANGUAGE}" "${SOURCE}"
                            ${depCommandArg}
                            VERBATIM
@@ -292,6 +292,7 @@ option(PVS_STUDIO_DEBUG OFF "Add debug info")
 # LICENSE path                  path to PVS-Studio.lic (default: ~/.config/PVS-Studio/PVS-Studio.lic)
 # CONFIG path                   path to PVS-Studio.cfg
 # CFG_TEXT text                 embedded PVS-Studio.cfg
+# SUPPRESS_BASE                 path to suppress base file
 # KEEP_COMBINED_PLOG            do not delete combined plog file *.pvs.raw for further processing with plog-converter
 #
 # Misc options:
@@ -319,7 +320,7 @@ function (pvs_studio_add_target)
     endif ()
 
     set(OPTIONAL OUTPUT ALL RECURSIVE HIDE_HELP KEEP_COMBINED_PLOG COMPILE_COMMANDS)
-    set(SINGLE LICENSE CONFIG TARGET LOG FORMAT BIN CONVERTER PLATFORM PREPROCESSOR CFG_TEXT)
+    set(SINGLE LICENSE CONFIG TARGET LOG FORMAT BIN CONVERTER PLATFORM PREPROCESSOR CFG_TEXT SUPPRESS_BASE)
     set(MULTI SOURCES C_FLAGS CXX_FLAGS ARGS DEPENDS ANALYZE MODE)
     cmake_parse_arguments(PVS_STUDIO "${OPTIONAL}" "${SINGLE}" "${MULTI}" ${ARGN})
 
@@ -404,6 +405,11 @@ function (pvs_studio_add_target)
                                 --platform "${PVS_STUDIO_PLATFORM}"
                                 --preprocessor "${PVS_STUDIO_PREPROCESSOR}")
 
+    if (NOT "${PVS_STUDIO_SUPPRESS_BASE}" STREQUAL "")
+        pvs_studio_join_path(PVS_STUDIO_SUPPRESS_BASE "${CMAKE_CURRENT_SOURCE_DIR}" "${PVS_STUDIO_SUPPRESS_BASE}")
+        list(APPEND PVS_STUDIO_ARGS --suppress-file "${PVS_STUDIO_SUPPRESS_BASE}")
+    endif ()
+
     if (NOT "${CMAKE_CXX_COMPILER}" STREQUAL "")
         list(APPEND PVS_STUDIO_ARGS --cxx "${CMAKE_CXX_COMPILER}")
     endif ()
@@ -476,7 +482,7 @@ function (pvs_studio_add_target)
                     ${PVS_STUDIO_ARGS}
             COMMENT "Analyzing with PVS-Studio"
             WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
-            DEPENDS "${PVS_STUDIO_CONFIG}"
+            DEPENDS "${PVS_STUDIO_CONFIG}" "${PVS_STUDIO_SUPPRESS_BASE}"
         )
         list(APPEND PVS_STUDIO_PLOGS_LOGS "${COMPILE_COMMANDS_LOG}.always")
         list(APPEND PVS_STUDIO_PLOGS_DEPENDENCIES "${COMPILE_COMMANDS_LOG}")
