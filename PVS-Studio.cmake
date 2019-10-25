@@ -303,6 +303,7 @@ option(PVS_STUDIO_DEBUG OFF "Add debug info")
 # C_FLAGS flags...              additional C_FLAGS
 # CXX_FLAGS flags...            additional CXX_FLAGS
 # ARGS args...                  additional pvs-studio-analyzer/CompilerCommandsAnalyzer.exe flags
+# CONVERTER_ARGS args...        additional plog-converter/HtmlGenerator.exe flags
 function (pvs_studio_add_target)
     macro (default VAR VALUE)
         if ("${${VAR}}" STREQUAL "")
@@ -321,7 +322,7 @@ function (pvs_studio_add_target)
 
     set(OPTIONAL OUTPUT ALL RECURSIVE HIDE_HELP KEEP_COMBINED_PLOG COMPILE_COMMANDS)
     set(SINGLE LICENSE CONFIG TARGET LOG FORMAT BIN CONVERTER PLATFORM PREPROCESSOR CFG_TEXT SUPPRESS_BASE)
-    set(MULTI SOURCES C_FLAGS CXX_FLAGS ARGS DEPENDS ANALYZE MODE)
+    set(MULTI SOURCES C_FLAGS CXX_FLAGS ARGS DEPENDS ANALYZE MODE CONVERTER_ARGS)
     cmake_parse_arguments(PVS_STUDIO "${OPTIONAL}" "${SINGLE}" "${MULTI}" ${ARGN})
 
     if ("${PVS_STUDIO_CONFIG}" STREQUAL "" OR NOT "${PVS_STUDIO_CFG_TEXT}" STREQUAL "")
@@ -506,7 +507,7 @@ function (pvs_studio_add_target)
             list(APPEND COMMANDS
                 COMMAND "${CMAKE_COMMAND}" -E remove -f "${PVS_STUDIO_LOG}.pvs.raw"
                 COMMAND "${CMAKE_COMMAND}" -E rename "${PVS_STUDIO_LOG}" "${PVS_STUDIO_LOG}.pvs.raw"
-                COMMAND "${PVS_STUDIO_CONVERTER}" -t "${PVS_STUDIO_FORMAT}" "${PVS_STUDIO_LOG}.pvs.raw" -o "${PVS_STUDIO_LOG}" -a "${PVS_STUDIO_MODE}"
+                COMMAND "${PVS_STUDIO_CONVERTER}" "${PVS_STUDIO_CONVERTER_ARGS}" -t "${PVS_STUDIO_FORMAT}" "${PVS_STUDIO_LOG}.pvs.raw" -o "${PVS_STUDIO_LOG}" -a "${PVS_STUDIO_MODE}"
                 )
             if(NOT PVS_STUDIO_KEEP_COMBINED_PLOG)
                 list(APPEND COMMANDS COMMAND "${CMAKE_COMMAND}" -E remove -f "${PVS_STUDIO_LOG}.pvs.raw")
