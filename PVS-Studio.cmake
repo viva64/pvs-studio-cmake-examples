@@ -126,6 +126,9 @@ function (pvs_studio_set_target_flags TARGET CXX C)
     set(CXX_FLAGS "${${CXX}}")
     set(C_FLAGS "${${C}}")
 
+    list(APPEND CXX_FLAGS "-isystem$<JOIN:${CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES},$<SEMICOLON>-isystem>")
+    list(APPEND C_FLAGS "-isystem$<JOIN:${CMAKE_C_IMPLICIT_INCLUDE_DIRECTORIES},$<SEMICOLON>-isystem>")
+
     set(prop_incdirs "$<TARGET_PROPERTY:${TARGET},INCLUDE_DIRECTORIES>")
     list(APPEND CXX_FLAGS "$<$<BOOL:${prop_incdirs}>:-I$<JOIN:${prop_incdirs},$<SEMICOLON>-I>>")
     list(APPEND C_FLAGS "$<$<BOOL:${prop_incdirs}>:-I$<JOIN:${prop_incdirs},$<SEMICOLON>-I>>")
