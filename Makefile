@@ -33,6 +33,36 @@ all:
 	cd example-7/build && make -j8
 	cd example-7/build && make -j8 pvs-studio-cmake-example-7
 
+	mkdir -p example-8/build
+	cd example-8/build && cmake ..
+	cd example-8/build && make -j8
+	cd example-8/build && make -j8 pvs-studio-cmake-example-8
+
+	mkdir -p example-9/build
+	cd example-9/build && cmake ..
+	cd example-9/build && make -j8
+	cd example-9/build && make -j8 pvs-studio-cmake-example-9
+
+	mkdir -p example-10/build
+	cd example-10/build && cmake ..
+	cd example-10/build && make -j8
+	cd example-10/build && make -j8 pvs-studio-cmake-example-10
+
+	mkdir -p example-11/build
+	cd example-11/build && cmake ..
+	cd example-11/build && make -j8
+	cd example-11/build && make -j8 pvs-studio-cmake-example-11
+
+	mkdir -p example-12/build
+	cd example-12/build && cmake ..
+	cd example-12/build && make -j8
+	cd example-12/build && make -j8 pvs-studio-cmake-example-12
+	
+	mkdir -p example-13/build
+	cd example-13/build && cmake ..
+	cd example-13/build && make -j8
+	cd example-13/build && make -j8 pvs-studio-cmake-example-13
+
 clean:
 	rm -rf example-1/build
 	rm -rf example-2/build
@@ -41,3 +71,8 @@ clean:
 	rm -rf example-5/build
 	rm -rf example-6/build
 	rm -rf example-7/build
+	rm -rf example-8/build
+	rm -rf example-9/build
+	rm -rf example-10/build
+	rm -rf example-11/build
+	rm -rf example-12/build
