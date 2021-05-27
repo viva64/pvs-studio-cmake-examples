@@ -76,3 +76,4 @@ clean:
 	rm -rf example-10/build
 	rm -rf example-11/build
 	rm -rf example-12/build
+	rm -rf example-13/build
