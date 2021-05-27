@@ -67,17 +67,17 @@ pvs-studio-analyzer analyze -o /path/to/project.log -e /path/to/exclude-path -j<
 plog-converter -a GA:1,2 -t tasklist -o /path/to/project.tasks /path/to/project.log
 ```
 
-### Description-of-examples
-- [example-01](example-1) Analysis of a simple project containing one file.
-- [example-02](example-2) Analysis of a simple project with a library connection
-- [example-03](example-3) Analyzing a project with build subdirectories
-- [example-04](example-4) Analyzing a project and its dependencies
-- [example-05](example-5) Project analysis with output of Tasklist format report
-- [example-06](example-6) Analysis of individual project modules and output of several reports
-- [example-07](example-7) Analyzing a project with compile_commands.json
-- [example-08](example-8) Project analysis using suppressed warnings database
-- [example-09](example-9) Analyzing a project using the pvs-studio config file and setting targets to be built before running the analysis.
-- [example-10](example-10) Analyzing a project using pvs-studio-analyzer flags
-- [example-11](example-11) Project analysis with selection of several diagnostic groups (for example GA, MISRA)
-- [example-12](example-12) Analyzing individual source files
-- [example-13](example-13) Project analysis using plog-converter flags.
+### Description of examples
+- [example-01](example-1) Analysis of a one-file simple project.
+- [example-02](example-2) Analysis of a simple project with a library linked.
+- [example-03](example-3) Analysis of a project with build subdirectories.
+- [example-04](example-4) Analyzing a project and its dependencies.
+- [example-05](example-5) Analysis that issues a Tasklist-format report.
+- [example-06](example-6) A project's individual module analysis that issues several reports.
+- [example-07](example-7) Analysis that employs compile_commands.json.
+- [example-08](example-8) Analysis that uses a suppressed warning database.
+- [example-09](example-9) Analysis that uses the pvs-studio config file. The example also shows how to set targets that must be built before analysis.
+- [example-10](example-10) Analysis that employs pvs-studio-analyzer flags.
+- [example-11](example-11) Analysis based on several selected diagnostic groups (for example GA, MISRA).
+- [example-12](example-12) Analyzing individual source files.
+- [example-13](example-13) Analysis that employs plog-converter flags.
