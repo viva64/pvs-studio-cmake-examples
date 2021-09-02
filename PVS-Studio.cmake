@@ -33,8 +33,9 @@ if (PVS_STUDIO_AS_SCRIPT)
     endforeach ()
 
     execute_process(COMMAND ${PVS_STUDIO_COMMAND} ${additional_args}
-                    ERROR_VARIABLE error
-                    RESULT_VARIABLE result)
+                    RESULT_VARIABLE result
+                    OUTPUT_VARIABLE output
+                    ERROR_VARIABLE error)
 
     set(stderr_type "")
 
@@ -42,7 +43,7 @@ if (PVS_STUDIO_AS_SCRIPT)
         set(stderr_type FATAL_ERROR)
     endif ()
 
-    if (result OR error)
+    if (NOT error STREQUAL "" OR (result AND NOT output STREQUAL "No compilation units were found.\n"))
         message(${stderr_type} "${error}")
     endif ()
 
@@ -138,6 +139,10 @@ function (pvs_studio_set_target_flags TARGET CXX C)
     set(prop_compdefs "$<TARGET_PROPERTY:${TARGET},COMPILE_DEFINITIONS>")
     list(APPEND CXX_FLAGS "$<$<BOOL:${prop_compdefs}>:-D$<JOIN:${prop_compdefs},$<SEMICOLON>-D>>")
     list(APPEND C_FLAGS "$<$<BOOL:${prop_compdefs}>:-D$<JOIN:${prop_compdefs},$<SEMICOLON>-D>>")
+
+    set(prop_compopt "$<TARGET_PROPERTY:${TARGET},COMPILE_OPTIONS>")
+    list(APPEND CXX_FLAGS "$<$<BOOL:${prop_compopt}>:$<JOIN:${prop_compopt},$<SEMICOLON>>>")
+    list(APPEND C_FLAGS "$<$<BOOL:${prop_compopt}>:$<JOIN:${prop_compopt},$<SEMICOLON>>>")
 
     set("${CXX}" "${CXX_FLAGS}" PARENT_SCOPE)
     set("${C}" "${C_FLAGS}" PARENT_SCOPE)
@@ -325,7 +330,7 @@ function (pvs_studio_add_target)
         set(DEFAULT_PREPROCESSOR "gcc")
     endif ()
 
-    set(OPTIONAL OUTPUT ALL RECURSIVE HIDE_HELP KEEP_COMBINED_PLOG COMPILE_COMMANDS)
+    set(OPTIONAL OUTPUT ALL RECURSIVE HIDE_HELP KEEP_COMBINED_PLOG COMPILE_COMMANDS KEEP_INTERMEDIATE_FILES)
     set(SINGLE LICENSE CONFIG TARGET LOG FORMAT BIN CONVERTER PLATFORM PREPROCESSOR CFG_TEXT SUPPRESS_BASE)
     set(MULTI SOURCES C_FLAGS CXX_FLAGS ARGS DEPENDS ANALYZE MODE CONVERTER_ARGS)
     cmake_parse_arguments(PVS_STUDIO "${OPTIONAL}" "${SINGLE}" "${MULTI}" ${ARGN})
@@ -419,6 +424,10 @@ function (pvs_studio_add_target)
     if (NOT "${CMAKE_C_COMPILER}" STREQUAL "")
         list(APPEND PVS_STUDIO_ARGS --cc "${CMAKE_C_COMPILER}")
     endif ()
+    
+    if (PVS_STUDIO_KEEP_INTERMEDIATE_FILES)
+        list(APPEND PVS_STUDIO_ARGS --dump-files)
+    endif()
 
     string(REGEX REPLACE [123,:] "" ANALYZER_MODE ${PVS_STUDIO_MODE})
     if (NOT "$ANALYZER_MODE" STREQUAL "GA")
@@ -501,9 +510,9 @@ function (pvs_studio_add_target)
             string(REPLACE / \\ PVS_STUDIO_PLOGS "${PVS_STUDIO_PLOGS}")
         endif ()
         if (WIN32)
-            set(COMMANDS COMMAND type ${PVS_STUDIO_PLOGS} ${PVS_STUDIO_PLOGS_LOGS} > "${PVS_STUDIO_LOG}" 2>nul)
+            set(COMMANDS COMMAND type ${PVS_STUDIO_PLOGS} ${PVS_STUDIO_PLOGS_LOGS} > "${PVS_STUDIO_LOG}" 2>nul || cd .)
         else ()
-            set(COMMANDS COMMAND cat ${PVS_STUDIO_PLOGS} ${PVS_STUDIO_PLOGS_LOGS} > "${PVS_STUDIO_LOG}")
+            set(COMMANDS COMMAND cat ${PVS_STUDIO_PLOGS} ${PVS_STUDIO_PLOGS_LOGS} > "${PVS_STUDIO_LOG}" 2>/dev/null || true)
         endif ()
         set(COMMENT "Generating ${LOG_RELATIVE}")
         if (NOT "${PVS_STUDIO_FORMAT}" STREQUAL "" OR PVS_STUDIO_OUTPUT)
