@@ -37,16 +37,10 @@ if (PVS_STUDIO_AS_SCRIPT)
                     OUTPUT_VARIABLE output
                     ERROR_VARIABLE error)
 
-    set(stderr_type "")
-
-    if (result)
-        set(stderr_type FATAL_ERROR)
-    endif ()
-
-    if (NOT error STREQUAL "" OR (result AND NOT output STREQUAL "No compilation units were found.\n"))
-        message(${stderr_type} "${error}")
-    endif ()
-
+    if (result AND NOT output MATCHES "^No compilation units were found\\.")
+        message(FATAL_ERROR "PVS-Studio exited with non-zero code.\nStdout:\n${output}\nStderr:\n${error}\n")
+    endif()
+    
     return()
 endif ()
 
