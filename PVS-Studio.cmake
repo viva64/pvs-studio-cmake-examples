@@ -31,7 +31,7 @@ if (PVS_STUDIO_AS_SCRIPT)
             endif ()
         endif ()
     endforeach ()
-
+    
     execute_process(COMMAND ${PVS_STUDIO_COMMAND} ${additional_args}
                     RESULT_VARIABLE result
                     OUTPUT_VARIABLE output
@@ -58,13 +58,17 @@ function (pvs_studio_log TEXT)
 endfunction ()
 
 function (pvs_studio_relative_path VAR ROOT FILEPATH)
+    if (WIN32)
+        STRING(REGEX REPLACE "\\\\" "/" ROOT ${ROOT})
+        STRING(REGEX REPLACE "\\\\" "/" FILEPATH ${FILEPATH})
+    endif()
     set("${VAR}" "${FILEPATH}" PARENT_SCOPE)
-    if ("${FILEPATH}" MATCHES "^/.*$" OR "${FILEPATH}" MATCHES "^.:/.*$")
+    if (IS_ABSOLUTE "${FILEPATH}")
         file(RELATIVE_PATH RPATH "${ROOT}" "${FILEPATH}")
-        if (NOT "${RPATH}" MATCHES "^\\.\\..*$")
+        if (NOT IS_ABSOLUTE "${RPATH}")
             set("${VAR}" "${RPATH}" PARENT_SCOPE)
-        endif ()
-    endif ()
+        endif()
+    endif()
 endfunction ()
 
 function (pvs_studio_join_path VAR DIR1 DIR2)
