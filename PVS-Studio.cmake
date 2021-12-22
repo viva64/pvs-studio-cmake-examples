@@ -100,7 +100,7 @@ macro (pvs_studio_append_flags_from_property CXX C DIR PREFIX)
 endmacro ()
 
 macro (pvs_studio_append_standard_flag FLAGS STANDARD)
-    if ("${STANDARD}" MATCHES "^(99|11|14|17)$")
+    if ("${STANDARD}" MATCHES "^(99|11|14|17|20)$")
         if ("${PVS_STUDIO_PREPROCESSOR}" MATCHES "gcc|clang")
             list(APPEND "${FLAGS}" "-std=c++${STANDARD}")
         endif ()
