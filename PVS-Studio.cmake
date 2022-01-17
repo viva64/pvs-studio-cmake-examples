@@ -517,10 +517,14 @@ function (pvs_studio_add_target)
             if ("${PVS_STUDIO_FORMAT}" STREQUAL "")
                 set(PVS_STUDIO_FORMAT "errorfile")
             endif ()
+            set(converter_no_help "")
+            if (PVS_STUDIO_HIDE_HELP)
+              set(converter_no_help "--noHelpMessages")
+            endif()
             list(APPEND COMMANDS
                 COMMAND "${CMAKE_COMMAND}" -E remove -f "${PVS_STUDIO_LOG}.pvs.raw"
                 COMMAND "${CMAKE_COMMAND}" -E rename "${PVS_STUDIO_LOG}" "${PVS_STUDIO_LOG}.pvs.raw"
-                COMMAND "${PVS_STUDIO_CONVERTER}" "${PVS_STUDIO_CONVERTER_ARGS}" -t "${PVS_STUDIO_FORMAT}" "${PVS_STUDIO_LOG}.pvs.raw" -o "${PVS_STUDIO_LOG}" -a "${PVS_STUDIO_MODE}"
+                COMMAND "${PVS_STUDIO_CONVERTER}" "${PVS_STUDIO_CONVERTER_ARGS}" ${converter_no_help} -t "${PVS_STUDIO_FORMAT}" "${PVS_STUDIO_LOG}.pvs.raw" -o "${PVS_STUDIO_LOG}" -a "${PVS_STUDIO_MODE}"
                 )
             if(NOT PVS_STUDIO_KEEP_COMBINED_PLOG)
                 list(APPEND COMMANDS COMMAND "${CMAKE_COMMAND}" -E remove -f "${PVS_STUDIO_LOG}.pvs.raw")
@@ -548,9 +552,7 @@ function (pvs_studio_add_target)
     endif ()
 
     if (PVS_STUDIO_OUTPUT)
-        if (PVS_STUDIO_HIDE_HELP AND NOT WIN32)
-            set(COMMANDS COMMAND grep -v " error: Help:" ${PVS_STUDIO_LOG} 1>&2 || exit 0)
-        elseif (WIN32)
+        if (WIN32)
             set(COMMANDS COMMAND type "${PVS_STUDIO_LOG}" 1>&2)
         else ()
             set(COMMANDS COMMAND cat "${PVS_STUDIO_LOG}" 1>&2)
