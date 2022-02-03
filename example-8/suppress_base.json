@@ -1,9 +1,9 @@
 {
-    "version": 1,
+    "version": 2,
     "warnings": [
         {
             "CodeCurrent": 1473373,
-            "CodeNext": 11069,
+            "CodeNext": 11233,
             "CodePrev": 123,
             "ErrorCode": "V501",
             "FileName": "main.cpp",
