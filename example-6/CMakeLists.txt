@@ -4,7 +4,7 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/..)
 
 project(pvs-studio-cmake-example-6 CXX)
 
-include(../PVS-Studio.cmake)
+include(../pvs-studio-cmake-module/PVS-Studio.cmake)
 
 add_subdirectory(subdir)
 add_subdirectory(subdir2)

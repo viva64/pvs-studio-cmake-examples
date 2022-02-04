@@ -5,7 +5,7 @@ add_subdirectory(subdir)
 add_executable(${PROJECT_NAME} main.cpp)
 target_link_libraries(${PROJECT_NAME} example4.lib)
 
-include(../PVS-Studio.cmake)
+include(../pvs-studio-cmake-module/PVS-Studio.cmake)
 pvs_studio_add_target(TARGET example4.analyze ALL
                       OUTPUT FORMAT errorfile
                       RECURSIVE ANALYZE ${PROJECT_NAME}
