@@ -2,7 +2,7 @@
 
 A few examples in this repository will help you to learn how to use the [PVS-Studio CMake module](https://github.com/viva64/pvs-studio-cmake-module) in your **CMakeLists.txt** properly. 
 
-You can also perform analysis of C and C++ projects based on [JSON Compilation Database](https://pvs-studio.com/en/docs/manual/6557/)
+You can also perform analysis of C and C++ projects based on [JSON Compilation Database](https://pvs-studio.com/en/docs/manual/6557/).
 
 [Go to description of the CMake module](https://pvs-studio.com/en/docs/manual/6591/)
 
@@ -13,7 +13,7 @@ You can also perform analysis of C and C++ projects based on [JSON Compilation D
 - [example-04](example-4) Analyzing a project and its dependencies.
 - [example-05](example-5) Analysis that issues a Tasklist-format report.
 - [example-06](example-6) A project's individual module analysis that issues several reports.
-- [example-07](example-7) Analysis that employs compile_commands.json.
+- [example-07](example-7) Analysis that employs compile\_commands.json.
 - [example-08](example-8) Analysis that uses a suppressed warning database.
 - [example-09](example-9) Analysis that uses the pvs-studio config file. The example also shows how to set targets that must be built before analysis.
 - [example-10](example-10) Analysis that employs pvs-studio-analyzer flags.
