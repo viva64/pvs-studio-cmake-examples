@@ -16,6 +16,7 @@ target_link_libraries(${PROJECT_NAME} lib)
 include(../pvs-studio-cmake-module/PVS-Studio.cmake)
 pvs_studio_add_target(TARGET example9.analyze ALL
                       OUTPUT FORMAT errorfile
+                      CONVERTER ARGS "-r root"
                       ANALYZE ${PROJECT_NAME} lib
                       CONFIG ${PVS_STUDIO_CONFIG}
                       DEPENDS ${PVS_STUDIO_CONFIG})
