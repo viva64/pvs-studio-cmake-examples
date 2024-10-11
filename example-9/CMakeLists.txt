@@ -1,8 +1,12 @@
 cmake_minimum_required(VERSION 3.5)
 project(pvs-studio-cmake-example-9 CXX)
 
+set(SOURCE_TREE_ROOT ${CMAKE_SOURCE_DIR})
+file(TO_NATIVE_PATH ${SOURCE_TREE_ROOT} SOURCE_TREE_ROOT)
+
 set(PVS_STUDIO_CONFIG "${CMAKE_BINARY_DIR}/PVS-Studio.cfg")
-set(PVS_STUDIO_CONFIG_COMMAND "${CMAKE_COMMAND}" -E echo "sourcetree-root=${CMAKE_SOURCE_DIR}" > "${PVS_STUDIO_CONFIG}")
+set(PVS_STUDIO_CONFIG_COMMAND "${CMAKE_COMMAND}" -E echo "sourcetree-root=${SOURCE_TREE_ROOT}" > "${PVS_STUDIO_CONFIG}")
+
 
 add_custom_command(OUTPUT "${PVS_STUDIO_CONFIG}"
                        COMMAND ${PVS_STUDIO_CONFIG_COMMAND}
@@ -16,7 +20,7 @@ target_link_libraries(${PROJECT_NAME} lib)
 include(../pvs-studio-cmake-module/PVS-Studio.cmake)
 pvs_studio_add_target(TARGET example9.analyze ALL
                       OUTPUT FORMAT errorfile
-                      CONVERTER ARGS "-r root"
+                      CONVERTER_ARGS -r "${SOURCE_TREE_ROOT}"
                       ANALYZE ${PROJECT_NAME} lib
                       CONFIG ${PVS_STUDIO_CONFIG}
                       DEPENDS ${PVS_STUDIO_CONFIG})
